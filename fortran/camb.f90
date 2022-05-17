@@ -419,6 +419,14 @@
 
     P%h0 = Ini%Read_Double('hubble')
 
+    ! modification to read new vars #mod
+    P%omega_inverse = Ini%Read_Double('omega_inverse')
+    P%weylmass = Ini%Read_Double('weylmass')
+    !these two vars are auxiliary for equation.f90 file
+    P%scal_amp = Ini%Read_Double('scalar_amp')
+    P%init_ratio = Ini%Read_Double('initial_ratio')
+    ! end of mod
+
     if (Ini%Read_Logical('use_physical', .true.)) then
         P%ombh2 = Ini%Read_Double('ombh2')
         P%omch2 = Ini%Read_Double('omch2')

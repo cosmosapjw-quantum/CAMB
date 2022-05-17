@@ -40,8 +40,11 @@
 
     logical, parameter :: plot_evolve = .false. !for outputing time evolution
 
-    integer, parameter :: basic_num_eqns = 4
+    integer, parameter :: basic_num_eqns = 6 ! originally 4 #mod
     integer, parameter :: ix_etak=1, ix_clxc=2, ix_clxb=3, ix_vb=4 !Scalar array indices for each quantity
+    ! new indices to compute weyl field #mod
+    integer, parameter :: ix_weyl = 5, ix_weyldot = 6
+    ! end of mod
     integer, parameter :: ixt_H = 1, ixt_shear = 2 !tensor indices
 
     logical :: DoTensorNeutrinos = .true.
@@ -1766,8 +1769,11 @@
     real(dl) a,a2, iqg, rhomass,a_massive, ep
     integer l,i, nu_i, j, ind
     integer, parameter :: i_clxg=1,i_clxr=2,i_clxc=3, i_clxb=4, &
-        i_qg=5,i_qr=6,i_vb=7,i_pir=8, i_eta=9, i_aj3r=10,i_clxde=11,i_vde=12
-    integer, parameter :: i_max = i_vde
+        i_qg=5,i_qr=6,i_vb=7,i_pir=8, i_eta=9, i_aj3r=10,i_clxde=11,i_vde=12 , &
+        ! new initial conditions for weyl field #mod
+        i_weyl=13, i_weyldot=14
+        ! end of mod
+    integer, parameter :: i_max = i_weyldot ! originally i_vde
     real(dl) initv(6,1:i_max), initvec(1:i_max)
 
     nullify(EV%OutputTransfer) !Should not be needed, but avoids issues in ifort 14
@@ -1854,6 +1860,8 @@
     initv(1,i_pir)=chi*4._dl/3*x2/Rp15*(1+omtau/4*(4*Rv-5)/(2*Rv+15))
     initv(1,i_aj3r)=chi*4/21._dl/Rp15*x3
     initv(1,i_eta)=-chi*2*EV%Kf(1)*(1 - x2/12*(-10._dl/Rp15 + EV%Kf(1)))
+    initv(1,i_weyl)=sqrt(2*CP%omega_inverse)
+    initv(1,i_weyldot)=0._dl
 
     if (CP%Scalar_initial_condition/= initial_adiabatic) then
         !CDM isocurvature
@@ -1918,6 +1926,11 @@
 
     y(ix_etak)= -InitVec(i_eta)*k/2
     !get eta_s*k, where eta_s is synchronous gauge variable
+
+    ! new indices allocation for weyl field
+    y(ix_weyl)=InitVec(i_weyl)
+    y(ix_weyldot)=InitVec(i_weyldot)
+    ! end of mod
 
     !  CDM
     y(ix_clxc)=InitVec(i_clxc)
@@ -2136,7 +2149,7 @@
 
     subroutine derivs(EV,n,tau,ay,ayprime)
     !  Evaluate the time derivatives of the scalar perturbations
-    use constants, only : barssc0, Compton_CT, line21_const
+    use constants, only : barssc0, Compton_CT, line21_const, kappa ! kappa is auxiliary #mod
     use MassiveNu
     use Recombination
     implicit none
@@ -2174,6 +2187,9 @@
     real(dl) ddopacity, visibility, dvisibility, ddvisibility, exptau, lenswindow
     real(dl) ISW, quadrupole_source, doppler, monopole_source, tau0, ang_dist
     real(dl) dgrho_de, dgq_de, cs2_de
+    ! vars to compute weyl field evolution #mod
+    real(dl) weyl, weyldot, weylddot
+    ! end of mod
 
     k=EV%k_buf
     k2=EV%k2_buf
@@ -2187,6 +2203,11 @@
     a2=a*a
 
     etak=ay(ix_etak)
+
+    ! weyl field vars #mod
+    weyl=ay(ix_weyl)
+    weyldot=ay(ix_weyldot)
+    ! end of mod
 
     !  CDM variables
     clxc=ay(ix_clxc)
@@ -2270,9 +2291,17 @@
 
     !  8*pi*a*a*SUM[rho_i*clx_i] - radiation terms
     dgrho=dgrho + grhog_t*clxg+grhor_t*clxr
-
     !  8*pi*a*a*SUM[(rho_i+p_i)*v_i]
     dgq=dgq + grhog_t*qg+grhor_t*qr
+
+    ! definition of massratio #mod
+    CP%massratio= (CP%weylmass**2)/(4.*const_pi*const_pi*CP%scal_amp*CP%init_ratio)
+    ! end of mod
+
+    ! weyl field contribution #mod
+    dgrho=dgrho + CP%massratio*weyl*grho - (2.-CP%massratio)*(3._dl*adotoa*weyldot+k2*weyl)
+    dgq=dgq + k*(weyldot-3._dl*adotoa*weyl)
+    ! end of mod
 
     !  Photon mass density over baryon mass density
     photbar=grhog_t/grhob_t
@@ -2309,6 +2338,13 @@
     !  Baryon equation of motion.
     clxbdot=-k*(z+vb)
     ayprime(ix_clxb)=clxbdot
+
+    ! weyl field equation of motion #mod
+    weylddot = -2.*adotdota*weyldot - (k2 + a2*(CP%weylmass/kappa)**2)*weyl
+    ayprime(ix_weyldot)=weylddot
+    ayprime(ix_weyl)=weyldot
+    ! end of mod
+
     !  Photon equation of motion
     clxgdot=-k*(4._dl/3._dl*z+qg)
 
@@ -2675,8 +2711,14 @@
         end if
 
         dgpi  = grhor_t*pir + grhog_t*pig
+        ! modification #mod
+        dgpi = dgpi + k2*weyl
+        ! end of mod
         dgpi_diff = 0  !sum (3*p_nu -rho_nu)*pi_nu
         pidot_sum = grhog_t*pigdot + grhor_t*pirdot
+        ! modification #mod
+        pidot_sum = pidot_sum + k2*weyldot
+        ! end of mod
         clxnu =0
         if (State%CP%Num_Nu_Massive /= 0) then
             call MassiveNuVarsOut(EV,ay,ayprime,a, adotoa, dgpi=dgpi, clxnu_all=clxnu, &
@@ -2704,6 +2746,9 @@
             EV%OutputTransfer(Transfer_Newt_vel_cdm)=  -k*sigma/adotoa
             EV%OutputTransfer(Transfer_Newt_vel_baryon) = -k*(vb + sigma)/adotoa
             EV%OutputTransfer(Transfer_vel_baryon_cdm) = vb
+            ! modification for new transfer #mod
+            EV%OutputTransfer(Transfer_weylscalar) = weyl
+            ! end of mod
             if (State%CP%do21cm) then
                 Tspin = State%CP%Recomb%T_s(a)
                 xe = State%CP%Recomb%x_e(a)

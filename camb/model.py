@@ -31,7 +31,8 @@ Transfer_Weyl = 10
 Transfer_Newt_vel_cdm = 11
 Transfer_Newt_vel_baryon = 12
 Transfer_vel_baryon_cdm = 13
-Transfer_max = Transfer_vel_baryon_cdm
+Transfer_weylscalar = 14 #mod
+Transfer_max = Transfer_weylscalar #originally Transfer_vel_baryon_cdm #mod
 
 # for 21cm case
 Transfer_monopole = 4
@@ -48,7 +49,7 @@ derived_names = ['age', 'zstar', 'rstar', 'thetastar', 'DAstar', 'zdrag',
                  'rdrag', 'kd', 'thetad', 'zeq', 'keq', 'thetaeq', 'thetarseq']
 
 transfer_names = ['k/h', 'delta_cdm', 'delta_baryon', 'delta_photon', 'delta_neutrino', 'delta_nu', 'delta_tot',
-                  'delta_nonu', 'delta_tot_de', 'Weyl', 'v_newtonian_cdm', 'v_newtonian_baryon', 'v_baryon_cdm']
+                  'delta_nonu', 'delta_tot_de', 'Weyl', 'v_newtonian_cdm', 'v_newtonian_baryon', 'v_baryon_cdm','weyl'] #mod
 
 evolve_names = transfer_names + ['a', 'etak', 'H', 'growth', 'v_photon', 'pi_photon',
                                  'E_2', 'v_neutrino', 'T_source', 'E_source', 'lens_potential_source']
@@ -196,6 +197,11 @@ class CAMBparams(F2003Class):
         ("omk", c_double, "Omega_K"),
         ("omnuh2", c_double, "Omega_massive_neutrino h^2"),
         ("H0", c_double, "Hubble parameter is km/s/Mpc units"),
+        # modification to real new vars in python #mod
+        ("omega_inverse", c_double, "inverse of coupling constant for Weyl field (like in BD theory)"),
+        ("weylmass", c_double, "mass of weyl field in Planck unit"),
+        ("massratio", c_double, "(mass of weyl field)/(mass of inflaton during inflation)"),
+        # end of mod
         ("TCMB", c_double, "CMB temperature today in Kelvin"),
         ("YHe", c_double, "Helium mass fraction"),
         ("num_nu_massless", c_double, "Effective number of massless neutrinos"),

@@ -137,6 +137,13 @@
         real(dl)  :: omk = 0._dl !Omega_K
         real(dl)  :: omnuh2 = 0._dl !massive neutino Omega_nu h^2
         real(dl)  :: H0 = 67._dl !Hubble parameter in km/s/Mpc
+        ! this is additional vars for modification #mod
+        real(dl)  :: omega_inverse = 0._dl ! coupling constant for Weyl field (like in BD theory)
+        real(dl)  :: weylmass = 0._dl !mass of weyl field in Planck unit
+        real(dl)  :: massratio = 0._dl !(mass of weyl field)/(mass of inflaton during inflation)
+        real(dl)  :: scal_amp = 1._dl !scalar amplitude for equation.f90 file
+        real(dl)  :: init_ratio = 0.1_dl !tensor-to-scalar ratio for equation.f90 file
+        ! end of mod
         real(dl)  :: TCMB = COBE_CMBTemp
         real(dl)  :: Yhe = 0.24_dl
         real(dl)  :: Num_Nu_massless = default_nnu
