@@ -1860,7 +1860,8 @@
     initv(1,i_pir)=chi*4._dl/3*x2/Rp15*(1+omtau/4*(4*Rv-5)/(2*Rv+15))
     initv(1,i_aj3r)=chi*4/21._dl/Rp15*x3
     initv(1,i_eta)=-chi*2*EV%Kf(1)*(1 - x2/12*(-10._dl/Rp15 + EV%Kf(1)))
-    initv(1,i_weyl)=sqrt(2*CP%omega_inverse)
+    ! #mod
+    initv(1,i_weyl)=-chi*sqrt(2.*CP%omega_inverse)
     initv(1,i_weyldot)=0._dl
 
     if (CP%Scalar_initial_condition/= initial_adiabatic) then
@@ -2188,7 +2189,7 @@
     real(dl) ISW, quadrupole_source, doppler, monopole_source, tau0, ang_dist
     real(dl) dgrho_de, dgq_de, cs2_de
     ! vars to compute weyl field evolution #mod
-    real(dl) weyl, weyldot, weylddot
+    real(dl) weyl, weyldot, weylddot, massratio
     ! end of mod
 
     k=EV%k_buf
@@ -2295,11 +2296,11 @@
     dgq=dgq + grhog_t*qg+grhor_t*qr
 
     ! definition of massratio #mod
-    CP%massratio= (CP%weylmass**2)/(4.*const_pi*const_pi*CP%scal_amp*CP%init_ratio)
+    massratio= (CP%weylmass**2)/(4.*const_pi*const_pi*CP%scal_amp*CP%init_ratio)
     ! end of mod
 
     ! weyl field contribution #mod
-    dgrho=dgrho + CP%massratio*weyl*grho - (2.-CP%massratio)*(3._dl*adotoa*weyldot+k2*weyl)
+    dgrho=dgrho + massratio*weyl*grho - (2.-massratio)*(3._dl*adotoa*weyldot+k2*weyl)
     dgq=dgq + k*(weyldot-3._dl*adotoa*weyl)
     ! end of mod
 
@@ -2340,9 +2341,11 @@
     ayprime(ix_clxb)=clxbdot
 
     ! weyl field equation of motion #mod
-    weylddot = -2.*adotdota*weyldot - (k2 + a2*(CP%weylmass/kappa)**2)*weyl
+    weylddot = -2.*adotoa*weyldot - (k2 + a2*(CP%weylmass/kappa)**2)*weyl
     ayprime(ix_weyldot)=weylddot
     ayprime(ix_weyl)=weyldot
+
+    ! print*, weyl ! for test
     ! end of mod
 
     !  Photon equation of motion

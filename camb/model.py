@@ -49,7 +49,7 @@ derived_names = ['age', 'zstar', 'rstar', 'thetastar', 'DAstar', 'zdrag',
                  'rdrag', 'kd', 'thetad', 'zeq', 'keq', 'thetaeq', 'thetarseq']
 
 transfer_names = ['k/h', 'delta_cdm', 'delta_baryon', 'delta_photon', 'delta_neutrino', 'delta_nu', 'delta_tot',
-                  'delta_nonu', 'delta_tot_de', 'Weyl', 'v_newtonian_cdm', 'v_newtonian_baryon', 'v_baryon_cdm','weyl'] #mod
+                  'delta_nonu', 'delta_tot_de', 'Weyl', 'v_newtonian_cdm', 'v_newtonian_baryon', 'v_baryon_cdm','weyls'] #mod
 
 evolve_names = transfer_names + ['a', 'etak', 'H', 'growth', 'v_photon', 'pi_photon',
                                  'E_2', 'v_neutrino', 'T_source', 'E_source', 'lens_potential_source']
@@ -200,7 +200,8 @@ class CAMBparams(F2003Class):
         # modification to real new vars in python #mod
         ("omega_inverse", c_double, "inverse of coupling constant for Weyl field (like in BD theory)"),
         ("weylmass", c_double, "mass of weyl field in Planck unit"),
-        ("massratio", c_double, "(mass of weyl field)/(mass of inflaton during inflation)"),
+        ("scal_amp", c_double, "scal_amp"),
+        ("init_ratio", c_double, "init_ratio"),
         # end of mod
         ("TCMB", c_double, "CMB temperature today in Kelvin"),
         ("YHe", c_double, "Helium mass fraction"),
@@ -413,7 +414,7 @@ class CAMBparams(F2003Class):
         except ValueError:
             raise CAMBParamRangeError('No solution for H0 inside of theta_H0_range')
 
-    def set_cosmology(self, H0: Optional[float] = None, ombh2=0.022, omch2=0.12, omk=0.0,
+    def set_cosmology(self, H0: Optional[float] = None, ombh2=0.022, omch2=0.12, weylmass=0.0, omega_inverse=1.0, omk=0.0, #mod
                       cosmomc_theta: Optional[float] = None, thetastar: Optional[float] = None,
                       neutrino_hierarchy: Union[str, int] = 'degenerate', num_massive_neutrinos=1,
                       mnu=0.06, nnu=constants.default_nnu, YHe: Optional[float] = None, meffsterile=0.0,
@@ -481,6 +482,10 @@ class CAMBparams(F2003Class):
         self.ombh2 = ombh2
         self.omch2 = omch2
         self.Alens = Alens
+
+        #mod
+        self.weylmass = weylmass
+        self.omega_inverse = omega_inverse
 
         neutrino_mass_fac = constants.neutrino_mass_fac * (constants.COBE_CMBTemp / TCMB) ** 3
 
